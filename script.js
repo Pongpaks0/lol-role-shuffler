@@ -6,6 +6,7 @@ const name2 = document.getElementById("name2");
 const name3 = document.getElementById("name3");
 const name4 = document.getElementById("name4");
 const name5 = document.getElementById("name5");
+const webhookURL = document.getElementById("webhookURL");
 
 document
   .getElementById("form")
@@ -47,17 +48,23 @@ document
       .toPng(output)
       .then(function (dataUrl) {
         copyToClipboard(dataUrl);
+        if (webhookURL.value) {
+          const blob = dataUrlToBlob(dataUrl);
+          sendToDiscord(webhookURL.value, blob);
+        }
       })
       .catch(function (error) {
         console.error("Error generating image:", error);
       });
 
     localStorage.setItem("rememberedNames", input.toString());
+    localStorage.setItem("rememberedHook", webhookURL.value);
   });
 
 // Check if data exists in local storage
 window.onload = function () {
   const rememberedNames = localStorage.getItem("rememberedNames").split(",");
+  const rememberedHook = localStorage.getItem("rememberedHook");
 
   if (rememberedNames) {
     name1.value = rememberedNames[0];
@@ -65,6 +72,10 @@ window.onload = function () {
     name3.value = rememberedNames[2];
     name4.value = rememberedNames[3];
     name5.value = rememberedNames[4];
+  }
+
+  if (rememberedHook) {
+    webhookURL.value = rememberedHook;
   }
 };
 
@@ -151,4 +162,39 @@ async function copyToClipboard(imgData) {
   } catch (err) {
     console.error("Failed to copy image to clipboard", err);
   }
+}
+
+// Function to convert base64 data URL to Blob
+function dataUrlToBlob(dataUrl) {
+  const byteString = atob(dataUrl.split(",")[1]); // Decode base64 string
+  const mimeString = dataUrl.split(",")[0].split(":")[1].split(";")[0]; // Get MIME type
+
+  const ab = new ArrayBuffer(byteString.length);
+  const ia = new Uint8Array(ab);
+  for (let i = 0; i < byteString.length; i++) {
+    ia[i] = byteString.charCodeAt(i);
+  }
+
+  return new Blob([ab], { type: mimeString });
+}
+
+function sendToDiscord(url, blob) {
+  // Create FormData
+  const formData = new FormData();
+
+  formData.append("files[0]", blob, "image.png");
+
+  // Send the request
+  fetch(url, {
+    method: "POST",
+    body: formData,
+  })
+    .then((response) => {
+      if (response.ok) {
+        console.log("Image sent successfully!");
+      } else {
+        console.error("Failed to send image:", response.statusText);
+      }
+    })
+    .catch((error) => console.error("Error:", error));
 }
