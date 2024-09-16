@@ -47,10 +47,11 @@ document
     htmlToImage
       .toPng(output)
       .then(function (dataUrl) {
-        copyToClipboard(dataUrl);
         if (webhookURL.value) {
           const blob = dataUrlToBlob(dataUrl);
           sendToDiscord(webhookURL.value, blob);
+        } else {
+          copyToClipboard(dataUrl);
         }
       })
       .catch(function (error) {
