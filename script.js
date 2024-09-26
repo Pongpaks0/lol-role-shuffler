@@ -1,3 +1,10 @@
+import { generateUniqueMatrix } from "./scripts/genMatrix.js";
+import { addHeadersToMatrix } from "./scripts/addMatrixHeader.js";
+import { display2DArray } from "./scripts/displayOutput.js";
+import { copyToClipboard } from "./scripts/copyToClip.js";
+import { dataUrlToBlob } from "./scripts/htmlToImg.js";
+import { sendToDiscord } from "./scripts/sendToDiscord.js";
+
 const ROLES = ["Top", "Jg", "Mid", "Carry", "Sup"];
 const GAMES = ["Game1", "Game2", "Game3", "Game4", "Game5"];
 
@@ -79,123 +86,3 @@ window.onload = function () {
     webhookURL.value = rememberedHook;
   }
 };
-
-function generateUniqueMatrix(input) {
-  const size = input.length;
-  const matrix = [];
-
-  for (let i = 0; i < size; i++) {
-    let row = [...input]; // Copy the input numbers
-    shuffle(row); // Shuffle the row to randomize the order
-
-    while (
-      matrix.some((r) =>
-        r.some((_, col) => row[col] === matrix[matrix.indexOf(r)][col])
-      )
-    ) {
-      shuffle(row); // Reshuffle if there's a column conflict with previous rows
-    }
-    matrix.push(row);
-  }
-
-  return matrix;
-}
-
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]]; // Swap elements
-  }
-}
-
-function display2DArray(array) {
-  document.getElementById("output").replaceChildren(); //reset
-
-  const h2Element = document.createElement("h2");
-  const pElement = document.createElement("p");
-  const table = document.createElement("table");
-
-  table.setAttribute("id", "output-table");
-  h2Element.textContent = "Output";
-  h2Element.setAttribute("id", "output-title");
-  pElement.textContent = "Copied image to clipboard";
-  pElement.setAttribute("id", "output-copied");
-
-  // Iterate over rows
-  array.forEach((row) => {
-    const tr = document.createElement("tr");
-
-    // Iterate over columns
-    row.forEach((cell) => {
-      const td = document.createElement("td");
-      td.textContent = cell;
-      tr.appendChild(td);
-    });
-
-    table.appendChild(tr);
-  });
-
-  // Append the table to the container div
-  document.getElementById("output").appendChild(h2Element);
-  document.getElementById("output").appendChild(table);
-  document.getElementById("output").appendChild(pElement);
-}
-
-function addHeadersToMatrix(matrix, rowHeaders, colHeaders) {
-  // Clone colHeaders and prepend an empty string for the top-left corner
-  const newColHeaders = ["", ...colHeaders];
-
-  // Add row headers to each row in the matrix
-  const matrixWithHeaders = matrix.map((row, i) => [rowHeaders[i], ...row]);
-
-  // Add the column headers as the first row
-  matrixWithHeaders.unshift(newColHeaders);
-
-  return matrixWithHeaders;
-}
-
-async function copyToClipboard(imgData) {
-  try {
-    const blob = await fetch(imgData).then((res) => res.blob());
-    const clipboardItem = new ClipboardItem({ [blob.type]: blob });
-    await navigator.clipboard.write([clipboardItem]);
-    //   alert('Table image copied to clipboard!');
-  } catch (err) {
-    console.error("Failed to copy image to clipboard", err);
-  }
-}
-
-// Function to convert base64 data URL to Blob
-function dataUrlToBlob(dataUrl) {
-  const byteString = atob(dataUrl.split(",")[1]); // Decode base64 string
-  const mimeString = dataUrl.split(",")[0].split(":")[1].split(";")[0]; // Get MIME type
-
-  const ab = new ArrayBuffer(byteString.length);
-  const ia = new Uint8Array(ab);
-  for (let i = 0; i < byteString.length; i++) {
-    ia[i] = byteString.charCodeAt(i);
-  }
-
-  return new Blob([ab], { type: mimeString });
-}
-
-function sendToDiscord(url, blob) {
-  // Create FormData
-  const formData = new FormData();
-
-  formData.append("files[0]", blob, "image.png");
-
-  // Send the request
-  fetch(url, {
-    method: "POST",
-    body: formData,
-  })
-    .then((response) => {
-      if (response.ok) {
-        console.log("Image sent successfully!");
-      } else {
-        console.error("Failed to send image:", response.statusText);
-      }
-    })
-    .catch((error) => console.error("Error:", error));
-}
