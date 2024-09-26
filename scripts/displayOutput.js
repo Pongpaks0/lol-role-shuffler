@@ -1,6 +1,8 @@
 import { getDayColor } from "./getDayColor.js";
+import { genNameColorPair } from "./genNameColorPair.js";
 
-export function display2DArray(array) {
+export function display2DArray(array, names) {
+  const nameColor = genNameColorPair(names);
   document.getElementById("output").replaceChildren(); //reset
 
   const h2Element = document.createElement("h2");
@@ -15,14 +17,27 @@ export function display2DArray(array) {
   pElement.setAttribute("id", "output-copied");
 
   // Iterate over rows
-  array.forEach((row) => {
+  array.forEach((row, rowIndex) => {
     const tr = document.createElement("tr");
 
     // Iterate over columns
-    row.forEach((cell) => {
-      const td = document.createElement("td");
-      td.textContent = cell;
-      tr.appendChild(td);
+    row.forEach((cell, colIndex) => {
+      let cellElement;
+
+      if (rowIndex === 0 || colIndex === 0) {
+        // Create header cells for the first row and first column
+        cellElement = document.createElement("th");
+      } else {
+        // Create regular data cells for other cells
+        cellElement = document.createElement("td");
+      }
+
+      cellElement.textContent = cell;
+
+      // Apply background color based on content
+      cellElement.style.color = nameColor.get(cell);
+
+      tr.appendChild(cellElement);
     });
 
     table.appendChild(tr);

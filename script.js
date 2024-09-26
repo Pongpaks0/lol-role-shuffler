@@ -47,7 +47,7 @@ document
 
     const matrixWithHead = addHeadersToMatrix(matrix, GAMES, ROLES);
 
-    display2DArray(matrixWithHead);
+    display2DArray(matrixWithHead, filtered);
 
     const output = document.getElementById("output-table");
 
